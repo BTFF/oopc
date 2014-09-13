@@ -4,12 +4,13 @@
 static void* string_initial(void* string);
 static void* string_final(void* string);
 static int string_compare(void* s1, void* s2);
-static void string_attach(void* string, char* c_string);
-static char* string_release(void* string);
+static void string_attach(void* string, char* c_string, int length);
+static char* string_detach(void* string);
 static char* string_copy(void* string, char* c_string, int begin, int end);
 static char* string_format(void* string, char* format, ...);
 static char* string_vformat(void* string, char* format, va_list ap);
-static void* string_trim(void* string, int begin, int end);    
+static char* string_concatenate(void* string, char* c_string, int begin, int end);
+static char* string_erase(void* string, int begin, int end);
 
 struct string_method string_method =
 	{
@@ -24,17 +25,19 @@ static void* string_initial(void* string)
 
 	if(!self->final)
 	{
-		object_method.initial(string);
+		object_method.initial(self);
+		method->initial = string_initial;
 		method->final = string_final;
 		method->compare = string_compare;
 		method->attach = string_attach;
-		method->release = string_release;
+		method->detach = string_detach;
 		method->format = string_format;
 		method->vformat = string_vformat;
-		method->trim = string_trim;
+		method->concatenate = string_concatenate;
+		method->erase = string_erase;
 	}
 	else
-		object_method.initial(string);
+		object_method.initial(self);
 
 	string->length = 0;
 	string->c_string = NULL;
@@ -70,17 +73,17 @@ static int string_compare(void* s1, void* s2)
 	return 0;
 }
 
-static void string_attach(void* string, char* c_string)
+static void string_attach(void* string, char* c_string, int length)
 {
 	struct string* self = string;
 	struct string_method* method = self->method;
 	if(self->c_string)
 		free(self->c_string);
-	self->length = strlen(c_string);
+	self->length = length;
 	self->c_string = c_string;
 }
 
-static char* string_release(void* string)
+static char* string_detach(void* string)
 {
 	struct string* self = string;
 	struct string_method* method = self->method;
@@ -91,7 +94,7 @@ static char* string_release(void* string)
 	return c_string;
 }
 
-static char* string_copy(void* string, char* from_string, int begin, int end)
+static char* string_copy(void* string, char* from, int begin, int end)
 {
 	struct string* self = string;
 	int length = end - begin;
@@ -99,7 +102,7 @@ static char* string_copy(void* string, char* from_string, int begin, int end)
 
 	if(!c_string)
 		return NULL;
-	memcpy(c_string, from_string + begin, length);
+	memcpy(c_string, from + begin, length);
 	c_string[length] = '\0';
 	if(self->c_string)
 		free(self->c_string);
@@ -142,32 +145,36 @@ static char* string_vformat(void* string, char* format, va_list ap)
 	return c_string;
 }
 
-static void* string_trim(void* string, int begin, int end)
+static char* string_concatenate(void* string, char* from, int begin, int end)
 {
 	struct string* self = string;
+	int length;
+	char* c_string;
 
-	if(self->length < begin + end)
+	if(being > end)
 		return NULL;
+	length = self->length + end - begin;
+	if(!(c_string = realloc(self->c_string, length + 1)))
+		return NULL;
+	memcpy(c_string + self->length, from + begin, end - begin);
+	c_string[length] = '\0';
+	self->length = length;
+	self->c_string = c_string;
+	return c_string;
+}
+
+static char* string_erase(void* string, int begin, int end)
+{
+	struct string* self = string;
+	if(begin < 0 || self->length < end)
+		return NULL;
+	memmove(self->c_string + begin, self->c_string + end, self->length - end);
+	self->length -= end - begin;
+	self->c_string[self->length] = '\0';
+	if(0 < self->legnth)
+		self->c_string = realloc(self->c_string, self->length + 1);
 	else
-	if(self->length == begin + end)
-	{
-		self->length = 0;
 		free(self->c_string);
-		self->c_string = NULL;
-	}
-	else
-	{
-		if(0 < begin) 
-		{
-			memmove(self->c_string, self->c_string + begin, self->length - begin);
-			self->length -= begin;
-		}
-		if(0 < end)
-		{
-			self->length -= end;
-			self->c_string[self->length] = '\0';
-		}
-	}
-	return self;
+	return self->c_string;
 }
 

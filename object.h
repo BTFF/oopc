@@ -1,7 +1,7 @@
 #ifndef object
 #define object object
 
-#include "oopc.h"
+#include "oop.h"
 
 extern struct object_method
 {
