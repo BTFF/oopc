@@ -6,10 +6,10 @@ static struct tree_node* splay(struct tree_node *root, struct object* key);
 
 static void* tree_initial(void* tree);
 static void* tree_final(void* tree);
-static/*(struct object*)*/void* tree_release(void* tree, void* /*(struct object*)*/key);
-static/*(struct object*)*/void tree_release_all(void* tree);
-static/*(struct object*)*/void* tree_insert(void* tree, void* /*(struct object*)*/key);
-static/*(struct object*)*/void* tree_search(void* tree, void* /*(struct object*)*/key);
+static/*object*/void* tree_release(void* tree, void* /*object*/key);
+static void tree_release_all(void* tree);
+static/*object*/void* tree_insert(void* tree, void* /*object*/key);
+static/*object*/void* tree_search(void* tree, void* /*object*/key);
 
 struct tree_method tree_method =
 	{
@@ -24,25 +24,37 @@ static void* tree_initial(void* tree)
 
 	if(!tree->final)
 	{
+		object_method.initial(self);
+		method->intial = tree_initial;
 		method->final = tree_final;
-		method->compare = tree_compare;
+		method->release = tree_release;
+		method->release_all = tree_release_all;
+		method->insert = tree_insert;
+		method->search = tree_search;
 	}
+	else
+		object_method.initial(self);
+
+	self->root = NULL;
 	return self;
 }
 
 static void* tree_final(void* tree)
 {
+	struct tree* self = tree;
+	$(self, release_all);
+	return self;
 }
 
-static/*(struct object*)*/void* tree_release(void* tree, void* /*(struct object*)*/key)
+static/*object*/void* tree_release(void* tree, void* /*object*/key)
 {
 }
 
-static/*(struct object*)*/void* tree_insert(void* tree, void* /*(struct object*)*/key)
+static/*object*/void* tree_insert(void* tree, void* /*object*/key)
 {
 }
 
-static/*object*/void* tree_search(void* tree, void* /*(struct object*)*/key)
+static/*object*/void* tree_search(void* tree, void* /*object*/key)
 {
 }
 
