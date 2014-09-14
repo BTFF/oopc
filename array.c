@@ -2,11 +2,11 @@
 
 static void* array_initial(void* array);
 static void* array_final(void* array);
-void* array_release(void* array, int index);
-void* array_insert(void* array, void* object, int index);
-void* array_erase(void* array, int begin, int end);
-void* array_sort(void* array);
-void* array_find(void* array, void* object_key);
+static void* array_release(void* array, int index);
+static void* array_insert(void* array, void* object, int index);
+static void* array_erase(void* array, int begin, int end);
+static void array_sort(void* array);
+static void* array_search(void* array, void* object_key);
 
 struct array_method array_method =
 	{
@@ -28,7 +28,7 @@ static void* array_initial(void* array)
 		method->insert = array_insert;
 		method->erase = array_erase;
 		method->sort = array_sort;
-		method->find = array_find;
+		method->search = array_search;
 	}
 	else
 		object_method.initial(self);
@@ -48,32 +48,70 @@ static void* array_final(void* array)
 		$delete(object);
 	}
 	free(self->object);
+	return NULL;
 }
 
-void* array_release(void* array, int index)
+static void* array_release(void* array, int index)
 {
 	struct array* self = array;
 	struct object* object;
-	if(index < 0 || array->size < index)
+	if(index < 0 || self->size < index)
 		return NULL;
-	object = array->object[index];
-	memmove(array->object + index, array->object + index + 1, sizeof(*array->object) * (array->size - (index + 1)));
+	object = self->object[index];
+	memmove(self->object + index, self->object + index + 1, sizeof(*self->object) * (self->size - (index + 1)));
+	self->size--;
 	return object;
 }
 
-void* array_insert(void* array, void* object, int index)
+static void* array_insert(void* array, void* insert, int index)
 {
+	struct array* self = array;
+	struct object** object;
+	if(index < 0 || self->size < index)
+		return NULL;
+	if(!(object = realloc(self->object, sizeof(*self->object) * (self->size + 1))))
+		return NULL;
+	self->object = object;
+	memmove(self->object + index + 1, self->object + index, sizeof(*self->object) * (self->size - index));
+	self->size++;
+	self->object[index] = insert;
+	return insert;
 }
 
-void* array_erase(void* array, int begin, int end)
+static void* array_erase(void* array, int begin, int end)
 {
+	struct array* self = array;
+	struct object* object;
+	int i;
+	if(begin >= end || begin < 0 || self->size < end)
+		return NULL;
+	object = self->object[index];
+	for(i = begin; i < end; i++)
+		$delete(self->object[i]);
+	memmove(self->object + begin, self->object + end, sizeof(*self->object) * (self->size - end));
+	self->size -= end - begin;
+	return self;
 }
 
-void* array_sort(void* array)
+static int compare(void* key, void* member)
 {
+	struct object** pobject_key = key;
+	struct object** pmember = member;
+	return $(*pobject_key, compare, *pmember);
 }
 
-void* array_find(void* array, void* object_key)
+static void array_sort(void* array)
 {
+	struct array* self = array;
+	qsort(self->object, self->size, sizeof(*self->object), compare);
+}
+
+static /* (struct object*) */ void* array_search(void* array, void* object_key)
+{
+	struct array* self = array;
+	struct object** match = bsearch(&object_key, self->object, self->size, sizeof(*self->object), compare)
+	if(match)
+		return *match;
+	return NULL;
 }
 
