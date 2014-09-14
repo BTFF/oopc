@@ -9,7 +9,6 @@ struct tree_node
 {
 	struct tree_node* left;
 	struct tree_node* right;
-	struct object* key;
 	struct object* object;
 };
 

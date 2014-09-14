@@ -1,11 +1,15 @@
 #include "tree.h"
 
+static struct tree_node* left_most(struct tree_node* root);
+static struct tree_node* right_most(struct tree_node* root);
+static struct tree_node* splay(struct tree_node *root, struct object* key);
+
 static void* tree_initial(void* tree);
 static void* tree_final(void* tree);
-static/*(struct object*)*/void* tree_release(void* tree, void* object);
+static/*(struct object*)*/void* tree_release(void* tree, void* /*(struct object*)*/key);
 static/*(struct object*)*/void tree_release_all(void* tree);
-static/*(struct object*)*/void* tree_insert(void* tree, void* object);
-static/*(struct object*)*/void* tree_search(void* tree, void* object);
+static/*(struct object*)*/void* tree_insert(void* tree, void* /*(struct object*)*/key);
+static/*(struct object*)*/void* tree_search(void* tree, void* /*(struct object*)*/key);
 
 struct tree_method tree_method =
 	{
@@ -30,6 +34,68 @@ static void* tree_final(void* tree)
 {
 }
 
+static/*(struct object*)*/void* tree_release(void* tree, void* /*(struct object*)*/key)
+{
+}
+
+static/*(struct object*)*/void* tree_insert(void* tree, void* /*(struct object*)*/key)
+{
+}
+
+static/*object*/void* tree_search(void* tree, void* /*(struct object*)*/key)
+{
+}
+
+static struct tree_node* left(struct tree_node* root)
+{
+	struct tree_node	null = {.left = NULL,.right = NULL};
+	struct tree_node    *left = &null;
+	struct tree_node    *right = &null;
+	struct tree_node    *tmp;
+START:
+	if(!(tmp = root->left))
+		goto END;
+	root->left = tmp->right;
+	tmp->right = root;
+	root = tmp;
+	if (!(tmp = root->left))
+		right->left = root;
+	right = root;
+	root = tmp;
+	goto START;
+END:
+	left->right = root->left;
+	right->left = root->right;
+	root->left = null.right;
+	root->right = null.left;
+	return root;
+}
+
+static struct tree_node* right(struct tree_node* root)
+{
+	struct tree_node	null = {.left = NULL,.right = NULL};
+	struct tree_node    *left = &null;
+	struct tree_node    *right = &null;
+	struct tree_node    *tmp;
+START:
+	if(!(tmp = root->right))
+		goto END;
+	root->right = tmp->left;
+	tmp->left = root;
+	root = tmp;
+	if (!(tmp = root->right))
+		left->right = root;
+	left = root;
+	root = tmp;
+	goto START;
+END:
+	left->right = root->left;
+	right->left = root->right;
+	root->left = null.right;
+	root->right = null.left;
+	return root;
+}
+
 static struct tree_node* splay(struct tree_node *root, struct object* key)
 {
 	struct tree_node	null = {.left = NULL,.right = NULL};
@@ -38,13 +104,13 @@ static struct tree_node* splay(struct tree_node *root, struct object* key)
 	struct tree_node    *tmp;
 	int compare;
 START:
-	compare = $(key, compare, root->key);
+	compare = $(key, compare, root->object);
 	if(compare < 0)
 	{
 LEFT:
 		if(!(tmp = root->left))
 			goto END;
-		compare = $(key, compare, tmp->key);
+		compare = $(key, compare, tmp->object);
 		if(compare < 0)
 		{
 			root->left = tmp->right;
@@ -78,7 +144,7 @@ LEFT:
 RIGHT:
 		if(!(tmp = root->right))
 			goto END;
-		compare = $(key, compare, tmp->key);
+		compare = $(key, compare, tmp->object);
 		if (compare > 0)
 		{
 			root->right = tmp->left;
@@ -114,16 +180,3 @@ END:
 	root->right = null.left;
 	return root;
 }
-
-static/*(struct object*)*/void* tree_release(void* tree, void* object)
-{
-}
-
-static/*(struct object*)*/void* tree_insert(void* tree, void* object)
-{
-}
-
-static/*(struct object*)*/void* tree_search(void* tree, void* object)
-{
-}
-
