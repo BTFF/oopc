@@ -7,7 +7,7 @@ Object Oriented Programming in C
 john->drive("Corvette", "Mary's House");
 
 // Objective-C
-[john driveCar:@"Corvette" toDestination:@"Mary's House"]
+[john driveCar:@"Corvette" toDestination:@"Mary's House"];
 
 /* C */
 $(john, drive, "Corvette", "Mary's House");
